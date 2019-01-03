@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t kousekt/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run kousekt/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t tkousek/multi-client ./client
+  - docker build -t tkousek/multi-nginx ./nginx
+  - docker build -t tkousek/multi-server ./server
+  - docker build -t tkousek/multi-worker ./worker
+  # Login to the docker CLI. DOCKER_PASSWORD passed as input to the 2nd command.
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take those images and push to docker hub
+  - docker push tkousek/multi-client
+  - docker push tkousek/multi-nginx
+  - docker push tkousek/multi-server
+  - docker push tkousek/multi-worker
